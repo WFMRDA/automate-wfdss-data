@@ -1,0 +1,5 @@
+Repo will contain python scripts used to automatically download, error check, process, and stage data for loading into the WFDSS application.
+
+Do not upload code containing usernames or passwords.
+
+Do not "add" data, log, or other files generated during the execution of these scripts
