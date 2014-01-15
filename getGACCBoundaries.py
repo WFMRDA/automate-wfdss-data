@@ -26,7 +26,7 @@ import csv
 import logging
 
 #set up variables
-workingFolder = r"c:/temp/"
+workingFolder = r'H:\Projects\AutomationTesting\\'
 dateTime = time.strftime("%Y%m%d%H%M%S") 
 downZipLocation = workingFolder + "GACCBoundaries" + dateTime + ".zip"
 dateTimeFolder = workingFolder + "GACCBoundaries" + dateTime
@@ -77,15 +77,18 @@ print (downZipLocation, newFileHash)
 #open the hash list file in read mode and read all the hashes and file names
 #compare to the current downloaded file hash
 #From examples in docs.python.org
-with open(hashListFile, 'rb') as csvfile:
-	hashListReader = csv.reader(csvfile)
-	for hashRow in hashListReader:
-		if hashRow[1] == newFileHash:
-			print "MATCH!"
-		else:
-			print "NO MATCH!"
-		print hashRow[1]
-csvfile.close()
+try:
+	with open(hashListFile, 'rb') as csvfile:
+		hashListReader = csv.reader(csvfile)
+		for hashRow in hashListReader:
+			if hashRow[1] == newFileHash:
+				print "MATCH!"
+			else:
+				print "NO MATCH!"
+			print hashRow[1]
+	csvfile.close()
+except IOError:
+	logging.error(hashListFile + ' does not exist. Cannot compare to older versions - there may not be any. Will create a new ' + hashListFile + ' and treat this as the first time this download has been attempted.')
 
 #open the hash list file in append/binary mode, and write the file name 
 # and sha1 hash to a file containing a list of hashes
