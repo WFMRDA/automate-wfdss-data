@@ -1,3 +1,4 @@
+#ABOUT
 #Download and unzip the GACC boundaries layer
 #Check to see if the new file is different from the last file using a list of file names and hashes
 #If is isn't different, delete the new file, and leave the list alone
@@ -6,17 +7,29 @@
 
 #Set to run getGACCBoundaries.py as a scheduled service to get this daily, weekly, or monthly.
 
-#Future improvements: 
-#	use a file for list of emails
-#	use a file for a list of download URLs
-#	implement error handling
-#	implement logging
+#WHO
+# Andrew D. Bailey, Data Manager
+# Department of Interior - Office of Wildland Fire
+# Wildland Fire Management Research, Development, and Application
+# USFS Rocky Mountain Research Station
+# Andrew d0t Bailey a+ nps daht gov
 
-#Import needed libraries
+#TODO:
+#	accept csv file for list of emails to be notified of results
+#	accept csv file for a list of download URLs
+#	implement error handling
+#	implement email notification
+#	implement logging
+#	functionalize the script
+
+
+#IMPORT
 # urllib for download
 import urllib
 # zipfile and os.path to unzip
-import zipfile,os.path 
+import zipfile
+# os for file operations
+import os.path 
 #time for date functions
 import time
 #import hashlib and csv for creating, reading, and modifying file hash list
@@ -74,33 +87,46 @@ newFileHash = shafile(downZipLocation)
 #print the download location and the sha1 hash of the new file
 print (downZipLocation, newFileHash)
 
-#open the hash list file in read mode and read all the hashes and file names
+#open the hash list file in read mode and read all the hashes and file names into lists
 #compare to the current downloaded file hash
 #From examples in docs.python.org
+#init lists
+zipFileHashes = []
+zipFileNames = []
 try:
 	with open(hashListFile, 'rb') as csvfile:
 		hashListReader = csv.reader(csvfile)
 		for hashRow in hashListReader:
-			if hashRow[1] == newFileHash:
-				print "MATCH!"
-			else:
-				print "NO MATCH!"
-			print hashRow[1]
-	csvfile.close()
+			zipFileNames.append(hashRow[0])
+			zipFileHashes.append(hashRow[1])
+		csvfile.close()
+#		print zipFileNames
+#		print zipFileHashes
+		if newFileHash in zipFileHashes: 
+			#if match, delete the downloaded file and exit
+			print "MATCH!"
+			logging.info('Match found in hash list.  No hash will be added, and the downloaded file will be deleted')
+			os.remove(downZipLocation) #delete downloaded file
+		else:
+			# keep downloaded file and add hash to list
+			print "NO MATCH!"
+			logging.info('No match found in hash list. Adding hash and saving downloaded file')
+			#open the hash list file in append/binary mode, and write the file name 
+			# and sha1 hash to a file containing a list of hashes
+			#From examples in docs.python.org
+			with open(hashListFile, 'ab') as csvfile:
+				hashListWriter = csv.writer(csvfile)
+				hashListWriter.writerow([downZipLocation, newFileHash])
+			csvfile.close()
+			#unzip the file into a folder named with the date and time
+			unzip(downZipLocation, dateTimeFolder)
+
 except IOError:
 	logging.error(hashListFile + ' does not exist. Cannot compare to older versions - there may not be any. Will create a new ' + hashListFile + ' and treat this as the first time this download has been attempted.')
-
-#open the hash list file in append/binary mode, and write the file name 
-# and sha1 hash to a file containing a list of hashes
-#From examples in docs.python.org
-with open(hashListFile, 'ab') as csvfile:
-	hashListWriter = csv.writer(csvfile)
-	hashListWriter.writerow([downZipLocation, newFileHash])
-csvfile.close()
-
-#unzip the file into a folder named with the date and time
-unzip(downZipLocation, dateTimeFolder)
-		
+	with open(hashListFile, 'ab') as csvfile:
+		hashListWriter = csv.writer(csvfile)
+		hashListWriter.writerow([downZipLocation, newFileHash])
+	csvfile.close()
 		
 #psuedocode for calculating hashes of downloaded files and keeping them as a list
 #checksums = []
